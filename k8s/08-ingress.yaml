@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: qod-api-ingress
+  namespace: qod
+  annotations:
+    # Use cert-manager for automatic TLS certificates
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: istio # Or your preferred ingress class
+  tls:
+    - hosts:
+        - qod.local # <-- IMPORTANT: Replace
+      secretName: qod-api-tls
+  rules:
+    - host: qod.your-domain.com # <-- IMPORTANT: Replace
+      http:
+        paths:
+          - path: /qod/v1
+            pathType: Prefix
+            backend:
+              service:
+                name: qod-api-service
+                port:
+                  number: 80

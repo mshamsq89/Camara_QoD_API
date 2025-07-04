@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: qod-api-config
+  namespace: qod
+data:
+  # Spring Boot config overrides
+  SERVER_PORT: "8080"
+  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER-URI: "https://auth.dt.spec.ntb.no/auth/realms/camara-test"
+  SPRING_DATA_REDIS_HOST: "redis"
+  SPRING_KAFKA_BOOTSTRAP-SERVERS: "kafka:9092"
+  QOD_TOPICS_SESSION-REQUEST: "qod-session-requests"
+  QOD_TOPICS_SESSION-DELETE: "qod-session-deletions"
+  MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"

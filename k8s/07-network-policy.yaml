@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: qod-default-deny
+  namespace: qod
+spec:
+  podSelector: {}
+  policyTypes: ["Ingress", "Egress"]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: qod-allow-traffic
+  namespace: qod
+spec:
+  podSelector: {}
+  policyTypes: ["Ingress", "Egress"]
+  ingress:
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            # Allow from ingress controller namespace (e.g., istio-system)
+            kubernetes.io/metadata.name: istio-system
+      - podSelector: {} # Allow from any pod within the 'qod' namespace
+  egress:
+    - to:
+      - podSelector: {} # Allow to any pod within the 'qod' namespace
+    # Allow DNS
+    - to:
+      - namespaceSelector: {}
+        podSelector: { matchLabels: { k8s-app: kube-dns } }
+      ports:
+      - { protocol: UDP, port: 53 }
+    # Allow egress to external OAuth provider (lock this down in prod)
+    - {}

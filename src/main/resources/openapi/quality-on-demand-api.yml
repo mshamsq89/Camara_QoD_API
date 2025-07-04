@@ -1,0 +1,123 @@
+openapi: 3.0.3
+info:
+  title: Quality-On-Demand (High-Performance)
+  description: Asynchronous implementation of the CAMARA QoD API.
+  version: 1.0.0
+servers:
+  - url: /
+tags:
+  - name: QoS Sessions
+    description: Manage QoS sessions
+paths:
+  /qod/v1/sessions:
+    post:
+      tags: [QoS Sessions]
+      summary: Creates a new session request
+      operationId: createSession
+      security:
+        - openId: ["quality-on-demand:sessions:create"]
+      requestBody:
+        description: Parameters to create a new session
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSession"
+      responses:
+        "202":
+          description: Request accepted for processing. The session is being created asynchronously. The returned object shows the initial 'REQUESTED' state.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionInfo"
+        "400":
+          description: Bad Request
+  /qod/v1/sessions/{sessionId}:
+    get:
+      tags: [QoS Sessions]
+      summary: Get QoS session information
+      operationId: getSession
+      security:
+        - openId: ["quality-on-demand:sessions:read"]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Session information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionInfo"
+        "404":
+          description: Not Found
+    delete:
+      tags: [QoS Sessions]
+      summary: Deletes a QoS session
+      operationId: deleteSession
+      security:
+        - openId: ["quality-on-demand:sessions:delete"]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Deletion request accepted.
+        "404":
+          description: Not Found
+
+components:
+  securitySchemes:
+    openId:
+      type: openIdConnect
+      openIdConnectUrl: https://example.com/.well-known/openid-configuration
+  schemas:
+    CreateSession:
+      type: object
+      properties:
+        duration: { type: integer, format: int32, minimum: 1 }
+        device: { $ref: "#/components/schemas/Device" }
+        applicationServer: { $ref: "#/components/schemas/ApplicationServer" }
+        qosProfile: { $ref: "#/components/schemas/QosProfileName" }
+      required: [duration, device, applicationServer, qosProfile]
+    SessionInfo:
+      type: object
+      properties:
+        sessionId: { type: string, format: uuid }
+        duration: { type: integer, format: int32 }
+        device: { $ref: "#/components/schemas/Device" }
+        applicationServer: { $ref: "#/components/schemas/ApplicationServer" }
+        qosProfile: { $ref: "#/components/schemas/QosProfileName" }
+        startedAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        qosStatus: { $ref: "#/components/schemas/QosStatus" }
+      required: [sessionId, duration, qosStatus]
+    Device:
+      type: object
+      properties:
+        ipv4Address: { $ref: "#/components/schemas/DeviceIpv4Addr" }
+      required: [ipv4Address]
+    DeviceIpv4Addr:
+      type: object
+      properties:
+        publicAddress: { type: string, format: ipv4 }
+      required: [publicAddress]
+    ApplicationServer:
+      type: object
+      properties:
+        ipv4Address: { type: string, format: ipv4 }
+      required: [ipv4Address]
+    QosProfileName:
+      type: string
+      enum: [ "QOS_S", "QOS_M", "QOS_L", "QOS_E" ]
+    QosStatus:
+      type: string
+      enum: [ "REQUESTED", "AVAILABLE", "UNAVAILABLE", "DELETED" ]
