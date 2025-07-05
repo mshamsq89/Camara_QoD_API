@@ -1,7 +1,3 @@
-Of course. Here is the final, comprehensive `README.md` that reflects the complete, working architecture you have built. This file serves as the perfect entry point and documentation for your project.
-
----
-
 # CAMARA Quality on Demand (QoD) API - High-Performance Implementation
 
 This project provides a production-grade, high-performance implementation of the CAMARA Quality on Demand (QoD) API, architected to handle millions of simultaneous calls with low latency and high security. It is designed for and deployed to Kubernetes.
