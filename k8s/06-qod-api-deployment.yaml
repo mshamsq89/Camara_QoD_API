@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qod-processor-deployment
+  namespace: qod
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: qod-processor } }
+  template:
+    metadata:
+      labels: { app: qod-processor }
+    spec:
+      # --- THIS SECTION IS THE FIX ---
+      imagePullSecrets:
+        - name: ghcr-credentials
+      # -----------------------------
+      containers:
+        - name: qod-processor
+          image: ghcr.io/mshamsq89/qod-api:latest # Make sure this matches your username
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef: { name: qod-api-config }

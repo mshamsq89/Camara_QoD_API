@@ -3,23 +3,24 @@ kind: Ingress
 metadata:
   name: qod-api-ingress
   namespace: qod
-  annotations:
-    # Use cert-manager for automatic TLS certificates
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  # =======================================================
+  # == THE FIX: REMOVE THE rewrite-target ANNOTATION     ==
+  # == This ensures the full path is passed to the app.  ==
+  # =======================================================
+  # annotations:
+  #   nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
-  ingressClassName: istio # Or your preferred ingress class
-  tls:
-    - hosts:
-        - qod.local # <-- IMPORTANT: Replace
-      secretName: qod-api-tls
+  ingressClassName: nginx
   rules:
-    - host: qod.your-domain.com # <-- IMPORTANT: Replace
+    - host: qod.local
       http:
         paths:
-          - path: /qod/v1
+          - path: /qod/v1 # The Ingress will match on this prefix...
             pathType: Prefix
             backend:
               service:
                 name: qod-api-service
                 port:
                   number: 80
+          # ... and forward the entire request URI, e.g., /qod/v1/sessions
+          # to the backend service.

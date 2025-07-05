@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qod-api-deployment
+  namespace: qod
+spec:
+  replicas: 3
+  selector: { matchLabels: { app: qod-api } }
+  template:
+    metadata:
+      labels: { app: qod-api }
+    spec:
+      # No imagePullSecrets needed anymore
+      initContainers:
+      - name: wait-for-redis
+        image: ghcr.io/mshamsq89/qod-api:289dbc5
+        command: ['sh', '-c', 'until (echo -n > /dev/tcp/redis/6379) &> /dev/null; do echo "Waiting for Redis..."; sleep 2; done;']
+      - name: wait-for-kafka
+        image: ghcr.io/mshamsq89/qod-api:289dbc5
+        command: ['sh', '-c', 'until (echo -n > /dev/tcp/kafka/9092) &> /dev/null; do echo "Waiting for Kafka..."; sleep 2; done;']
+      containers:
+        - name: qod-api
+          # The MAIN container still uses your application image
+          image: ghcr.io/mshamsq89/qod-api:289dbc5
+          imagePullPolicy: Always
+          ports:
+            - { name: http, containerPort: 8080 }
+          env: # <-- Add this env section
+            - name: SPRING_PROFILES_ACTIVE
+              value: "api" # This pod will NOT load the Kafka listener
+          envFrom:
+            - configMapRef: { name: qod-api-config }
+          readinessProbe:
+            httpGet: { path: /actuator/health/readiness, port: http }
+          livenessProbe:
+            httpGet: { path: /actuator/health/liveness, port: http }

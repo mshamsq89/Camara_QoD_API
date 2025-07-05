@@ -10,9 +10,21 @@ spec:
     metadata:
       labels: { app: qod-processor }
     spec:
+      # No imagePullSecrets needed anymore
+      initContainers:
+      - name: wait-for-redis
+        image: ghcr.io/mshamsq89/qod-api:289dbc5
+        command: ['sh', '-c', 'until (echo -n > /dev/tcp/redis/6379) &> /dev/null; do echo "Waiting for Redis..."; sleep 2; done;']
+      - name: wait-for-kafka
+        image: ghcr.io/mshamsq89/qod-api:289dbc5
+        command: ['sh', '-c', 'until (echo -n > /dev/tcp/kafka/9092) &> /dev/null; do echo "Waiting for Kafka..."; sleep 2; done;']
       containers:
         - name: qod-processor
-          image: ghcr.io/your-org/qod-api:latest # Same image, different entrypoint/config if needed
+          # The MAIN container still uses your application image
+          image: ghcr.io/mshamsq89/qod-api:289dbc5
           imagePullPolicy: Always
+          env: # <-- Add this env section
+            - name: SPRING_PROFILES_ACTIVE
+              value: "processor" # This pod will NOT load the Kafka listener  
           envFrom:
             - configMapRef: { name: qod-api-config }

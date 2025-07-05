@@ -1,35 +1,45 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: qod-default-deny
+  name: qod-default-policy
   namespace: qod
 spec:
+  # Apply this policy to all pods in the 'qod' namespace
   podSelector: {}
-  policyTypes: ["Ingress", "Egress"]
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: qod-allow-traffic
-  namespace: qod
-spec:
-  podSelector: {}
-  policyTypes: ["Ingress", "Egress"]
+  policyTypes:
+    - Ingress
+    - Egress
+  # --- INGRESS RULES ---
   ingress:
+    # Rule 1: Allow traffic FROM any pod within our own 'qod' namespace
+    - from:
+      - podSelector: {}
+    # =======================================================
+    # == THE DEFINITIVE FIX: ALLOW TRAFFIC FROM THE INGRESS ==
+    # == CONTROLLER'S NAMESPACE.                           ==
+    # =======================================================
+    # Rule 2: Allow traffic FROM the Ingress Controller namespace
     - from:
       - namespaceSelector:
           matchLabels:
-            # Allow from ingress controller namespace (e.g., istio-system)
-            kubernetes.io/metadata.name: istio-system
-      - podSelector: {} # Allow from any pod within the 'qod' namespace
+            # IMPORTANT: Change 'ingress-nginx' to whatever namespace you
+            # found in the previous step if it's different.
+            kubernetes.io/metadata.name: ingress-nginx
+  # --- EGRESS RULES ---
   egress:
+    # Allow traffic TO any pod within our own 'qod' namespace
     - to:
-      - podSelector: {} # Allow to any pod within the 'qod' namespace
-    # Allow DNS
+      - podSelector: {}
+    # Allow DNS queries
     - to:
       - namespaceSelector: {}
-        podSelector: { matchLabels: { k8s-app: kube-dns } }
+        podSelector:
+          matchLabels:
+            k8s-app: kube-dns
       ports:
-      - { protocol: UDP, port: 53 }
-    # Allow egress to external OAuth provider (lock this down in prod)
-    - {}
+        - protocol: UDP
+          port: 53
+    # Allow egress to the internet
+    - to:
+      - ipBlock:
+          cidr: 0.0.0.0/0

@@ -1,46 +1,38 @@
 server:
   port: 8080
 
-# Springdoc OpenAPI & Swagger UI
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
-# Spring Security
 spring:
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: "https://auth.dt.spec.ntb.no/auth/realms/camara-test"
-
-  # Redis Configuration
   data:
     redis:
       host: localhost
       port: 6379
-
-  # Kafka Configuration
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
       group-id: qod-processors
       auto-offset-reset: earliest
+      # =======================================================
+      # == THE DEFINITIVE FIX: USE A SIMPLE STRING DESERIALIZER ==
+      # == This perfectly matches our listener which expects a ==
+      # == ConsumerRecord<String, String>.                     ==
+      # =======================================================
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: "com.camaraproject.qod.model"
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      # All the complex JsonDeserializer properties have been removed.
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      # The producer correctly uses JsonSerializer to convert the SessionInfo object to a JSON string.
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
-# Application-specific properties
 qod:
   topics:
     session-request: qod-session-requests
     session-delete: qod-session-deletions
 
-# Actuator Endpoints for K8s Probes
 management:
   endpoints:
     web:
