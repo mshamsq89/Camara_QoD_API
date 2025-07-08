@@ -13,15 +13,15 @@ spec:
       # No imagePullSecrets needed anymore
       initContainers:
       - name: wait-for-redis
-        image: ghcr.io/mshamsq89/qod-api:289dbc5
+        image: ghcr.io/mshamsq89/qod-api:8dff927
         command: ['sh', '-c', 'until (echo -n > /dev/tcp/redis/6379) &> /dev/null; do echo "Waiting for Redis..."; sleep 2; done;']
       - name: wait-for-kafka
-        image: ghcr.io/mshamsq89/qod-api:289dbc5
+        image: ghcr.io/mshamsq89/qod-api:8dff927
         command: ['sh', '-c', 'until (echo -n > /dev/tcp/kafka/9092) &> /dev/null; do echo "Waiting for Kafka..."; sleep 2; done;']
       containers:
         - name: qod-processor
           # The MAIN container still uses your application image
-          image: ghcr.io/mshamsq89/qod-api:289dbc5
+          image: ghcr.io/mshamsq89/qod-api:8dff927
           imagePullPolicy: Always
           env: # <-- Add this env section
             - name: SPRING_PROFILES_ACTIVE
